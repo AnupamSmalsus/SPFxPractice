@@ -9,10 +9,19 @@
           "manifest": "./src/webparts/firstWebPart/FirstWebPartWebPart.manifest.json"
         }
       ]
+    },
+    "user-registration-form-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/userRegistrationForm/UserRegistrationFormWebPart.js",
+          "manifest": "./src/webparts/userRegistrationForm/UserRegistrationFormWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
   "localizedResources": {
-    "FirstWebPartWebPartStrings": "lib/webparts/firstWebPart/loc/{locale}.js"
+    "FirstWebPartWebPartStrings": "lib/webparts/firstWebPart/loc/{locale}.js",
+    "UserRegistrationFormWebPartStrings": "lib/webparts/userRegistrationForm/loc/{locale}.js"
   }
 }
