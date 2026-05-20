@@ -57,7 +57,8 @@ const UserRegistration = ({ allProps }: any) => {
         const web = new Web(allProps?.siteUrl);
         try {
             const items: any = await web.lists.getById(allProps?.UserRegistrationDetailsList).items
-                .select('Id', 'Title', 'Department', 'Designation', 'Address', 'JoiningDate', 'LeavingDate')
+                .select('Id', 'Title', 'Department', 'Designation', 'Address', 'JoiningDate', 'LeavingDate', 'Status', 'ApproverEmail')
+                .filter("Status eq 'Approved'")
                 .getAll();
             setUserDetails(items);
         }
@@ -86,7 +87,9 @@ const UserRegistration = ({ allProps }: any) => {
                 Designation: user.Designation || '',
                 Address: user.Address || '',
                 JoiningDate: user.JoiningDate ? user.JoiningDate.split('T')[0] : '',
-                LeavingDate: user.LeavingDate ? user.LeavingDate.split('T')[0] : ''
+                LeavingDate: user.LeavingDate ? user.LeavingDate.split('T')[0] : '',
+                Status: user.Status || '',
+                ApproverEmail: user.ApproverEmail || ''
             });
         } else {
             setEditUserId(null);
@@ -96,7 +99,9 @@ const UserRegistration = ({ allProps }: any) => {
                 Designation: '',
                 Address: '',
                 JoiningDate: '',
-                LeavingDate: ''
+                LeavingDate: '',
+                Status: 'Pending',
+                ApproverEmail: 'anupamrawat17@gmail.com'
             });
         }
         setIsPanelOpen(true);
@@ -123,7 +128,7 @@ const UserRegistration = ({ allProps }: any) => {
             if (editUserId) {
                 await list.items.getById(editUserId).update(userData);
             } else {
-                await list.items.add(userData);
+                await list.items.add(userData)
             }
             setIsPanelOpen(false);
             fetchUserDetails();
@@ -134,22 +139,25 @@ const UserRegistration = ({ allProps }: any) => {
     };
 
     const deleteUser = async (user: any) => {
+        const confirm = window.confirm(`Are you sure you want to delete the user${user.Title}?`);
+        if (!confirm) {
+            return;
+        }
         const web = new Web(allProps?.siteUrl)
         await web.lists.getById(allProps?.UserRegistrationDetailsList).items.getById(user.Id).recycle();
         fetchUserDetails()
     }
 
     const columns: IColumn[] = [
-        { key: 'Title', name: 'Name', fieldName: 'Title', minWidth: 100, maxWidth: 200, isResizable: true },
-        { key: 'Department', name: 'Department', fieldName: 'Department', minWidth: 100, maxWidth: 150, isResizable: true },
-        { key: 'Designation', name: 'Designation', fieldName: 'Designation', minWidth: 100, maxWidth: 150, isResizable: true },
-        { key: 'Address', name: 'Address', fieldName: 'Address', minWidth: 100, maxWidth: 200, isResizable: true },
+        { key: 'Title', name: 'Name', fieldName: 'Title', minWidth: 100, isResizable: true },
+        { key: 'Department', name: 'Department', fieldName: 'Department', minWidth: 100, isResizable: true },
+        { key: 'Designation', name: 'Designation', fieldName: 'Designation', minWidth: 100, isResizable: true },
+        { key: 'Address', name: 'Address', fieldName: 'Address', minWidth: 100, isResizable: true },
         {
             key: 'JoiningDate',
             name: 'Joining Date',
             fieldName: 'JoiningDate',
             minWidth: 100,
-            maxWidth: 150,
             isResizable: true,
             onRender: (item) => <span>{item.JoiningDate ? new Date(item.JoiningDate).toLocaleDateString() : ''}</span>
         },
@@ -158,7 +166,6 @@ const UserRegistration = ({ allProps }: any) => {
             name: 'Leaving Date',
             fieldName: 'LeavingDate',
             minWidth: 100,
-            maxWidth: 150,
             isResizable: true,
             onRender: (item) => <span>{item.LeavingDate ? new Date(item.LeavingDate).toLocaleDateString() : ''}</span>
         },
@@ -166,10 +173,10 @@ const UserRegistration = ({ allProps }: any) => {
             key: 'Action',
             name: 'Action',
             fieldName: 'Action',
-            minWidth: 50,
-            maxWidth: 50,
+            minWidth: 100,
+            maxWidth: 100,
             onRender: (item) => (
-                <>
+                <Stack horizontal tokens={{ childrenGap: 8 }}>
                     <IconButton
                         iconProps={{ iconName: 'Edit' }}
                         title="Edit"
@@ -182,7 +189,7 @@ const UserRegistration = ({ allProps }: any) => {
                         ariaLabel="Delete"
                         onClick={() => deleteUser(item)}
                     />
-                </>
+                </Stack>
             )
         }
     ];
