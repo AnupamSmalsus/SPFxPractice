@@ -41,6 +41,10 @@ export default class UserRegistrationFormWebPart extends BaseClientSideWebPart<I
   }
 
   protected onInit(): Promise<void> {
+    this.domElement.style.width = '100%';
+    this.domElement.style.maxWidth = '100%';
+    this.domElement.style.boxSizing = 'border-box';
+
     return this._getEnvironmentMessage().then(message => {
       this._environmentMessage = message;
     });

@@ -6,9 +6,9 @@ export default class UserRegistrationForm extends React.Component<IUserRegistrat
   public render(): React.ReactElement<IUserRegistrationFormProps> {
 
     return (
-      <>
-      <UserRegistration allProps={this.props}/>
-      </>
+      <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+        <UserRegistration allProps={this.props} />
+      </div>
     );
   }
 }

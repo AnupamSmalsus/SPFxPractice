@@ -29,6 +29,7 @@ const theme = getTheme();
 const classNames = mergeStyleSets({
     container: {
         width: '100%',
+        maxWidth: '100%',
         boxSizing: 'border-box',
         padding: '24px',
         backgroundColor: theme.palette.white,
@@ -36,8 +37,22 @@ const classNames = mergeStyleSets({
         borderRadius: theme.effects.roundedCorner6,
         margin: '16px 0'
     },
+    detailsListWrapper: {
+        width: '100%',
+        maxWidth: '100%',
+    },
     detailsList: {
         width: '100%',
+        maxWidth: '100%',
+        selectors: {
+            '.ms-DetailsHeader': {
+                width: '100% !important',
+            },
+            '.ms-DetailsRow-fields': {
+                width: '100% !important',
+                minWidth: '100% !important',
+            },
+        },
     },
     headerStack: {
         marginBottom: '20px'
@@ -65,11 +80,17 @@ const classNames = mergeStyleSets({
     }
 });
 
+const ACTION_COLUMN_WIDTH = 90;
+const DATA_COLUMN_COUNT = 6;
+const MIN_DATA_COLUMN_WIDTH = 100;
+
 const UserRegistration = ({ allProps }: any) => {
     const [userDetails, setUserDetails] = React.useState<any[]>([]);
     const [departmentChoices, setDepartmentChoices] = React.useState<string[]>([]);
     const [designationChoices, setDesignationChoices] = React.useState<string[]>([]);
     const [searchTerm, setSearchTerm] = React.useState('');
+    const listWrapperRef = React.useRef<HTMLDivElement>(null);
+    const [listWidth, setListWidth] = React.useState(0);
 
     const [isPanelOpen, setIsPanelOpen] = React.useState(false);
     const [editUserId, setEditUserId] = React.useState<number | null>(null);
@@ -93,6 +114,22 @@ const UserRegistration = ({ allProps }: any) => {
             setDesignationChoices(desChoices || []);
         }
         init();
+    }, []);
+
+    React.useEffect(() => {
+        const el = listWrapperRef.current;
+        if (!el) {
+            return;
+        }
+
+        const updateWidth = (): void => {
+            setListWidth(el.offsetWidth);
+        };
+
+        updateWidth();
+        const observer = new ResizeObserver(updateWidth);
+        observer.observe(el);
+        return () => observer.disconnect();
     }, []);
 
     const fetchUserDetails = async () => {
@@ -229,32 +266,45 @@ const UserRegistration = ({ allProps }: any) => {
         }
     ];
 
-    const columns: IColumn[] = [
-        { key: 'Title', name: 'Name', fieldName: 'Title', minWidth: 140, isResizable: true },
-        { key: 'Department', name: 'Department', fieldName: 'Department', minWidth: 140, isResizable: true },
-        { key: 'Designation', name: 'Designation', fieldName: 'Designation', minWidth: 140, isResizable: true },
+    const dataColumnWidth = React.useMemo(() => {
+        if (listWidth <= ACTION_COLUMN_WIDTH) {
+            return MIN_DATA_COLUMN_WIDTH;
+        }
+        return Math.max(
+            MIN_DATA_COLUMN_WIDTH,
+            Math.floor((listWidth - ACTION_COLUMN_WIDTH) / DATA_COLUMN_COUNT)
+        );
+    }, [listWidth]);
+
+    const columns: IColumn[] = React.useMemo(() => [
+        { key: 'Title', name: 'Name', fieldName: 'Title', minWidth: dataColumnWidth, maxWidth: dataColumnWidth, isResizable: false },
+        { key: 'Department', name: 'Department', fieldName: 'Department', minWidth: dataColumnWidth, maxWidth: dataColumnWidth, isResizable: false },
+        { key: 'Designation', name: 'Designation', fieldName: 'Designation', minWidth: dataColumnWidth, maxWidth: dataColumnWidth, isResizable: false },
         {
             key: 'JoiningDate',
             name: 'Joining Date',
             fieldName: 'JoiningDate',
-            minWidth: 120,
-            isResizable: true,
+            minWidth: dataColumnWidth,
+            maxWidth: dataColumnWidth,
+            isResizable: false,
             onRender: (item) => <span>{item.JoiningDate ? new Date(item.JoiningDate).toLocaleDateString() : ''}</span>
         },
         {
             key: 'LeavingDate',
             name: 'Leaving Date',
             fieldName: 'LeavingDate',
-            minWidth: 120,
-            isResizable: true,
+            minWidth: dataColumnWidth,
+            maxWidth: dataColumnWidth,
+            isResizable: false,
             onRender: (item) => <span>{item.LeavingDate ? new Date(item.LeavingDate).toLocaleDateString() : ''}</span>
         },
         {
             key: 'Status',
             name: 'Status',
             fieldName: 'Status',
-            minWidth: 110,
-            isResizable: true,
+            minWidth: dataColumnWidth,
+            maxWidth: dataColumnWidth,
+            isResizable: false,
             onRender: (item) => (
                 <span className={item.Status === 'Approved' ? classNames.statusBadgeApproved : classNames.statusBadgePending}>
                     {item.Status}
@@ -265,8 +315,9 @@ const UserRegistration = ({ allProps }: any) => {
             key: 'Action',
             name: 'Action',
             fieldName: 'Action',
-            minWidth: 90,
-            maxWidth: 90,
+            minWidth: ACTION_COLUMN_WIDTH,
+            maxWidth: ACTION_COLUMN_WIDTH,
+            isResizable: false,
             onRender: (item) => (
                 <Stack horizontal tokens={{ childrenGap: 8 }}>
                     <IconButton
@@ -284,7 +335,7 @@ const UserRegistration = ({ allProps }: any) => {
                 </Stack>
             )
         }
-    ];
+    ], [dataColumnWidth]);
 
     const stackTokens: IStackTokens = { childrenGap: 15 };
 
@@ -315,27 +366,29 @@ const UserRegistration = ({ allProps }: any) => {
                 items={commandBarItems}
                 farItems={farCommandBarItems}
                 ariaLabel="User management actions"
-                styles={{ root: { padding: 0, marginBottom: 16 } }}
+                styles={{ root: { padding: 0, marginBottom: 16, width: '100%' } }}
             />
 
-            {filteredUsers.length === 0 ? (
-                <MessageBar messageBarType={MessageBarType.info} isMultiline={false}>
-                    No users found matching the criteria.
-                </MessageBar>
-            ) : (
-                <DetailsList
-                    className={classNames.detailsList}
-                    items={filteredUsers}
-                    columns={columns}
-                    layoutMode={DetailsListLayoutMode.justified}
-                    selectionMode={SelectionMode.none}
-                    styles={{
-                        root: { width: '100%' },
-                        focusZone: { width: '100%' },
-                        contentWrapper: { width: '100%' },
-                    }}
-                />
-            )}
+            <div ref={listWrapperRef} className={classNames.detailsListWrapper}>
+                {filteredUsers.length === 0 ? (
+                    <MessageBar messageBarType={MessageBarType.info} isMultiline={false}>
+                        No users found matching the criteria.
+                    </MessageBar>
+                ) : (
+                    <DetailsList
+                        className={classNames.detailsList}
+                        items={filteredUsers}
+                        columns={columns}
+                        layoutMode={DetailsListLayoutMode.fixedColumns}
+                        selectionMode={SelectionMode.none}
+                        styles={{
+                            root: { width: '100%', maxWidth: '100%' },
+                            focusZone: { width: '100%', maxWidth: '100%' },
+                            contentWrapper: { width: '100%', maxWidth: '100%' },
+                        }}
+                    />
+                )}
+            </div>
 
             <Panel
                 isOpen={isPanelOpen}
