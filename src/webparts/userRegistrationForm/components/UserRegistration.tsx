@@ -14,15 +14,54 @@ import {
     IStackTokens,
     mergeStyleSets,
     SelectionMode,
-    DefaultButton
+    DefaultButton,
+    CommandBar,
+    ICommandBarItemProps,
+    SearchBox,
+    Text,
+    getTheme,
+    FontWeights,
+    MessageBar,
+    MessageBarType
 } from '@fluentui/react';
 
+const theme = getTheme();
 const classNames = mergeStyleSets({
-    topBar: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '15px'
+    container: {
+        width: '100%',
+        boxSizing: 'border-box',
+        padding: '24px',
+        backgroundColor: theme.palette.white,
+        boxShadow: theme.effects.elevation16,
+        borderRadius: theme.effects.roundedCorner6,
+        margin: '16px 0'
+    },
+    detailsList: {
+        width: '100%',
+    },
+    headerStack: {
+        marginBottom: '20px'
+    },
+    statusBadgeApproved: {
+        backgroundColor: '#dff6dd',
+        color: '#107c10',
+        padding: '4px 10px',
+        borderRadius: '12px',
+        fontSize: '12px',
+        fontWeight: FontWeights.semibold,
+        display: 'inline-block'
+    },
+    statusBadgePending: {
+        backgroundColor: '#fff4ce',
+        color: '#797775',
+        padding: '4px 10px',
+        borderRadius: '12px',
+        fontSize: '12px',
+        fontWeight: FontWeights.semibold,
+        display: 'inline-block'
+    },
+    searchBox: {
+        width: '280px',
     }
 });
 
@@ -30,6 +69,7 @@ const UserRegistration = ({ allProps }: any) => {
     const [userDetails, setUserDetails] = React.useState<any[]>([]);
     const [departmentChoices, setDepartmentChoices] = React.useState<string[]>([]);
     const [designationChoices, setDesignationChoices] = React.useState<string[]>([]);
+    const [searchTerm, setSearchTerm] = React.useState('');
 
     const [isPanelOpen, setIsPanelOpen] = React.useState(false);
     const [editUserId, setEditUserId] = React.useState<number | null>(null);
@@ -39,7 +79,9 @@ const UserRegistration = ({ allProps }: any) => {
         Designation: '',
         Address: '',
         JoiningDate: '',
-        LeavingDate: ''
+        LeavingDate: '',
+        Status: 'Pending',
+        ApproverEmail: 'anupamrawat17@gmail.com'
     });
 
     React.useEffect(() => {
@@ -58,7 +100,7 @@ const UserRegistration = ({ allProps }: any) => {
         try {
             const items: any = await web.lists.getById(allProps?.UserRegistrationDetailsList).items
                 .select('Id', 'Title', 'Department', 'Designation', 'Address', 'JoiningDate', 'LeavingDate', 'Status', 'ApproverEmail')
-                .filter("Status eq 'Approved'")
+                .filter("Status eq 'Approved' or Status eq 'Pending'")
                 .getAll();
             setUserDetails(items);
         }
@@ -88,8 +130,8 @@ const UserRegistration = ({ allProps }: any) => {
                 Address: user.Address || '',
                 JoiningDate: user.JoiningDate ? user.JoiningDate.split('T')[0] : '',
                 LeavingDate: user.LeavingDate ? user.LeavingDate.split('T')[0] : '',
-                Status: user.Status || '',
-                ApproverEmail: user.ApproverEmail || ''
+                Status: user.Status || 'Pending',
+                ApproverEmail: user.ApproverEmail || 'anupamrawat17@gmail.com'
             });
         } else {
             setEditUserId(null);
@@ -139,7 +181,7 @@ const UserRegistration = ({ allProps }: any) => {
     };
 
     const deleteUser = async (user: any) => {
-        const confirm = window.confirm(`Are you sure you want to delete the user${user.Title}?`);
+        const confirm = window.confirm(`Are you sure you want to delete the user ${user.Title}?`);
         if (!confirm) {
             return;
         }
@@ -148,16 +190,54 @@ const UserRegistration = ({ allProps }: any) => {
         fetchUserDetails()
     }
 
+    const filteredUsers = React.useMemo(() => {
+        if (!searchTerm) return userDetails;
+        const lowerSearch = searchTerm.toLowerCase();
+        return userDetails.filter(u =>
+            (u.Title && u.Title.toLowerCase().includes(lowerSearch)) ||
+            (u.Department && u.Department.toLowerCase().includes(lowerSearch)) ||
+            (u.Designation && u.Designation.toLowerCase().includes(lowerSearch))
+        );
+    }, [userDetails, searchTerm]);
+
+    const commandBarItems: ICommandBarItemProps[] = [
+        {
+            key: 'newItem',
+            text: 'Add User',
+            iconProps: { iconName: 'Add' },
+            onClick: () => openPanel(),
+        },
+        {
+            key: 'refresh',
+            text: 'Refresh',
+            iconProps: { iconName: 'Refresh' },
+            onClick: () => fetchUserDetails(),
+        }
+    ];
+
+    const farCommandBarItems: ICommandBarItemProps[] = [
+        {
+            key: 'search',
+            onRender: () => (
+                <SearchBox
+                    placeholder="Search users..."
+                    className={classNames.searchBox}
+                    onChange={(_, newValue) => setSearchTerm(newValue || '')}
+                    styles={{ root: { marginTop: 4 } }}
+                />
+            )
+        }
+    ];
+
     const columns: IColumn[] = [
-        { key: 'Title', name: 'Name', fieldName: 'Title', minWidth: 100, isResizable: true },
-        { key: 'Department', name: 'Department', fieldName: 'Department', minWidth: 100, isResizable: true },
-        { key: 'Designation', name: 'Designation', fieldName: 'Designation', minWidth: 100, isResizable: true },
-        { key: 'Address', name: 'Address', fieldName: 'Address', minWidth: 100, isResizable: true },
+        { key: 'Title', name: 'Name', fieldName: 'Title', minWidth: 140, isResizable: true },
+        { key: 'Department', name: 'Department', fieldName: 'Department', minWidth: 140, isResizable: true },
+        { key: 'Designation', name: 'Designation', fieldName: 'Designation', minWidth: 140, isResizable: true },
         {
             key: 'JoiningDate',
             name: 'Joining Date',
             fieldName: 'JoiningDate',
-            minWidth: 100,
+            minWidth: 120,
             isResizable: true,
             onRender: (item) => <span>{item.JoiningDate ? new Date(item.JoiningDate).toLocaleDateString() : ''}</span>
         },
@@ -165,16 +245,28 @@ const UserRegistration = ({ allProps }: any) => {
             key: 'LeavingDate',
             name: 'Leaving Date',
             fieldName: 'LeavingDate',
-            minWidth: 100,
+            minWidth: 120,
             isResizable: true,
             onRender: (item) => <span>{item.LeavingDate ? new Date(item.LeavingDate).toLocaleDateString() : ''}</span>
+        },
+        {
+            key: 'Status',
+            name: 'Status',
+            fieldName: 'Status',
+            minWidth: 110,
+            isResizable: true,
+            onRender: (item) => (
+                <span className={item.Status === 'Approved' ? classNames.statusBadgeApproved : classNames.statusBadgePending}>
+                    {item.Status}
+                </span>
+            )
         },
         {
             key: 'Action',
             name: 'Action',
             fieldName: 'Action',
-            minWidth: 100,
-            maxWidth: 100,
+            minWidth: 90,
+            maxWidth: 90,
             onRender: (item) => (
                 <Stack horizontal tokens={{ childrenGap: 8 }}>
                     <IconButton
@@ -209,18 +301,41 @@ const UserRegistration = ({ allProps }: any) => {
     );
 
     return (
-        <div>
-            <div className={classNames.topBar}>
-                <h2>Registered Users</h2>
-                <PrimaryButton text="Add User" iconProps={{ iconName: 'Add' }} onClick={() => openPanel()} />
-            </div>
+        <div className={classNames.container}>
+            <Stack className={classNames.headerStack} tokens={{ childrenGap: 5 }}>
+                <Text variant="xLarge" styles={{ root: { fontWeight: FontWeights.semibold } }}>
+                    User Registration
+                </Text>
+                <Text variant="medium" styles={{ root: { color: theme.palette.neutralSecondary } }}>
+                    Manage all registered users, their roles, and system statuses.
+                </Text>
+            </Stack>
 
-            <DetailsList
-                items={userDetails}
-                columns={columns}
-                layoutMode={DetailsListLayoutMode.justified}
-                selectionMode={SelectionMode.none}
+            <CommandBar
+                items={commandBarItems}
+                farItems={farCommandBarItems}
+                ariaLabel="User management actions"
+                styles={{ root: { padding: 0, marginBottom: 16 } }}
             />
+
+            {filteredUsers.length === 0 ? (
+                <MessageBar messageBarType={MessageBarType.info} isMultiline={false}>
+                    No users found matching the criteria.
+                </MessageBar>
+            ) : (
+                <DetailsList
+                    className={classNames.detailsList}
+                    items={filteredUsers}
+                    columns={columns}
+                    layoutMode={DetailsListLayoutMode.justified}
+                    selectionMode={SelectionMode.none}
+                    styles={{
+                        root: { width: '100%' },
+                        focusZone: { width: '100%' },
+                        contentWrapper: { width: '100%' },
+                    }}
+                />
+            )}
 
             <Panel
                 isOpen={isPanelOpen}

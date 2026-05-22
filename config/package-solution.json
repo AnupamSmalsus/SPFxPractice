@@ -3,7 +3,7 @@
   "solution": {
     "name": "sp-fx-client-side-solution",
     "id": "2b606923-c4bc-44c2-9522-12ac40f4ab1d",
-    "version": "1.0.0.4",
+    "version": "1.0.0.6",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "isDomainIsolated": false,
