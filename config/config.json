@@ -17,11 +17,20 @@
           "manifest": "./src/webparts/userRegistrationForm/UserRegistrationFormWebPart.manifest.json"
         }
       ]
+    },
+    "redux-user-form-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/reduxUserForm/ReduxUserFormWebPart.js",
+          "manifest": "./src/webparts/reduxUserForm/ReduxUserFormWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
   "localizedResources": {
     "FirstWebPartWebPartStrings": "lib/webparts/firstWebPart/loc/{locale}.js",
-    "UserRegistrationFormWebPartStrings": "lib/webparts/userRegistrationForm/loc/{locale}.js"
+    "UserRegistrationFormWebPartStrings": "lib/webparts/userRegistrationForm/loc/{locale}.js",
+    "ReduxUserFormWebPartStrings": "lib/webparts/reduxUserForm/loc/{locale}.js"
   }
 }
