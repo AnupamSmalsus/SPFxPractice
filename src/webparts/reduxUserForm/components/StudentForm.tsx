@@ -3,98 +3,154 @@ import { useDispatch, useSelector } from "react-redux";
 import { updateField, resetForm } from "../state/students/studentsSlice";
 import { AppDispatch } from "../state/store";
 import { Web } from "sp-pnp-js";
+import {
+  Stack,
+  TextField,
+  DatePicker,
+  PrimaryButton,
+  DefaultButton
+} from "@fluentui/react";
+import '../components/ReduxUserForm.module.scss'
 
 const StudentForm = (props: any) => {
-  const baseUrl = props?.props?.siteUrl;
+  const baseUrl = props?.siteUrl;
   const dispatch = useDispatch<AppDispatch>();
 
   const formData = useSelector(
     (state: any) => state.student
   );
 
-  const handleChange = (e: any) => {
-    dispatch(
-      updateField({
-        field: e.target.name,
-        value: e.target.value
-      })
-    );
-  };
-
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     const web = new Web(baseUrl);
-    await web.lists.getById(props?.props?.TestUsersListId).items.add(formData).then((res: any) => {
-        console.log("Item is added successfully")
-        dispatch(resetForm());
+    await web.lists.getById(props?.TestUsersListId).items.add(formData).then((res: any) => {
+      console.log("Item is added successfully", formData);
+      dispatch(resetForm());
+      props?.closePopupCallBack();
     }).catch((error: any) => {
-        console.log(error)
+      console.log(error)
     })
-    console.log(formData);
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input
-        name="Title"
-        placeholder="Title"
-        value={formData.Title}
-        onChange={handleChange}
-      />
+    <Stack tokens={{ childrenGap: 20 }} className="formContainer">
 
-      <input
-        name="First_x0020_Name"
-        placeholder="First Name"
-        value={formData.First_x0020_Name}
-        onChange={handleChange}
-      />
+      <Stack horizontal tokens={{ childrenGap: 16 }}>
+        <TextField
+          label="First Name"
+          value={formData.First_x0020_Name}
+          onChange={(e, value) =>
+            dispatch(updateField({
+              field: "First_x0020_Name",
+              value: value || ""
+            }))
+          }
+          styles={{ root: { width: "100%" } }}
+        />
 
-      <input
-        name="Last_x0020_Name"
-        placeholder="Last Name"
-        value={formData.Last_x0020_Name}
-        onChange={handleChange}
-      />
+        <TextField
+          label="Last Name"
+          value={formData.Last_x0020_Name}
+          onChange={(e, value) =>
+            dispatch(updateField({
+              field: "Last_x0020_Name",
+              value: value || ""
+            }))
+          }
+          styles={{ root: { width: "100%" } }}
+        />
+      </Stack>
 
-      <input
-        name="Class"
-        placeholder="Class"
-        value={formData.Class}
-        onChange={handleChange}
-      />
+      <Stack horizontal tokens={{ childrenGap: 16 }}>
+        <TextField
+          label="Student ID"
+          value={formData.Title}
+          onChange={(e, value) =>
+            dispatch(updateField({
+              field: "Title",
+              value: value || ""
+            }))
+          }
+          styles={{ root: { width: "100%" } }}
+        />
 
-      <input
-        name="Section"
-        placeholder="Section"
-        value={formData.Section}
-        onChange={handleChange}
-      />
+        <TextField
+          label="Class"
+          value={formData.Class}
+          onChange={(e, value) =>
+            dispatch(updateField({
+              field: "Class",
+              value: value || ""
+            }))
+          }
+          styles={{ root: { width: "100%" } }}
+        />
+      </Stack>
 
-      <input
-        type="date"
-        name="DateOfBirth"
-        value={formData.DateOfBirth}
-        onChange={handleChange}
-      />
+      <Stack horizontal tokens={{ childrenGap: 16 }}>
+        <TextField
+          label="Section"
+          value={formData.Section}
+          onChange={(e, value) =>
+            dispatch(updateField({
+              field: "Section",
+              value: value || ""
+            }))
+          }
+          styles={{ root: { width: "100%" } }}
+        />
 
-      <textarea
-        name="Address"
-        placeholder="Address"
+        <DatePicker
+          label="Date of Birth"
+          value={
+            formData.DateOfBirth
+              ? new Date(formData.DateOfBirth)
+              : undefined
+          }
+          onSelectDate={(date) =>
+            dispatch(
+              updateField({
+                field: "DateOfBirth",
+                value: date
+                  ? date.toLocaleDateString("en-US")
+                  : ""
+              })
+            )
+          }
+          styles={{ root: { width: "100%" } }}
+        />
+      </Stack>
+
+      <TextField
+        label="Address"
+        multiline
+        rows={4}
+        onChange={(e, value) =>
+          dispatch(updateField({
+            field: "Address",
+            value: value || ""
+          }))
+        }
         value={formData.Address}
-        onChange={handleChange}
       />
 
-      <button type="submit">
-        Save
-      </button>
-
-      <button
-        type="button"
-        onClick={() => dispatch(resetForm())}
+      <Stack
+        horizontal
+        horizontalAlign="end"
+        tokens={{ childrenGap: 10 }}
       >
-        Reset
-      </button>
-    </form>
+        <DefaultButton
+          text="Reset"
+          onClick={() => dispatch(resetForm())}
+        />
+
+        <PrimaryButton
+          text="Save Student"
+          onClick={handleSubmit}
+        />
+      </Stack>
+
+    </Stack>
   );
 };
 
