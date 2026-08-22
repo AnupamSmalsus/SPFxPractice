@@ -1,36 +1,35 @@
-Connect-PnPOnline -Url "https://holidaywiser.sharepoint.com/sites/MainRoot/SubsiteA" -ClientId "3dce459d-605f-40f5-8573-4abd196e6220" -Interactive
+Connect-PnPOnline `
+    -Url "https://apeda.sharepoint.com/sites/RootSite" `
+    -ClientId "e4f4feeb-ec85-4db6-927b-5566740b4dc6" `
+    -Interactive `
 
 $items = @(
     @{
+        Title = "Test Task 1"
+        Name = "Anupam"
+        Address = "Test Address 1"
+    },
+    @{
         Title = "Test Task 2"
-        Status = "Approved"
-        Agenda = "Discussion 1"
-        SubmissionDate = [DateTime]::Now
+        Name= "Anju"
+        Address = "Test Address 2"
     },
     @{
         Title = "Test Task 3"
-        Status = "Rejected"
-        Agenda = "Discussion 2"
-        SubmissionDate = [DateTime]::Now
+        Name = "Ashwini"
+        Address = "Test Address 3"
     },
     @{
         Title = "Test Task 4"
-        Status = "Approved"
-        Agenda = "Discussion 3"
-        SubmissionDate = [DateTime]::Now
-    },
-    @{
-        Title = "Test Task 5"
-        Status = "Rejected"
-        Agenda = "Discussion 2"
-        SubmissionDate = [DateTime]::Now
+        Name = "Adarsh"
+        Address = "Test Address 4"
     }
     
 )
 
 foreach($item in $items)
 {
-    Add-PnPListItem -List "NewTaskList" -Values $item
+    Add-PnPListItem -List "TestList" -Values $item
 }
 
 Write-Host "Items Added Successfully"

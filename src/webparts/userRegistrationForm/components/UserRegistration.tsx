@@ -88,6 +88,7 @@ const UserRegistration = ({ allProps }: any) => {
     const [userDetails, setUserDetails] = React.useState<any[]>([]);
     const [departmentChoices, setDepartmentChoices] = React.useState<string[]>([]);
     const [designationChoices, setDesignationChoices] = React.useState<string[]>([]);
+    const [statusChoices, setStatusChoices] = React.useState<string[]>([]);
     const [searchTerm, setSearchTerm] = React.useState('');
     const listWrapperRef = React.useRef<HTMLDivElement>(null);
     const [listWidth, setListWidth] = React.useState(0);
@@ -101,7 +102,7 @@ const UserRegistration = ({ allProps }: any) => {
         Address: '',
         JoiningDate: '',
         LeavingDate: '',
-        Status: 'Pending',
+        Status: '',
         ApproverEmail: 'anupamrawat17@gmail.com'
     });
 
@@ -112,6 +113,8 @@ const UserRegistration = ({ allProps }: any) => {
             setDepartmentChoices(depChoices || []);
             const desChoices = await getChoicesFromField(allProps?.UserRegistrationDetailsList, 'Designation');
             setDesignationChoices(desChoices || []);
+            const statChoices = await getChoicesFromField(allProps?.UserRegistrationDetailsList, 'Status');
+            setStatusChoices(statChoices || []);
         }
         init();
     }, []);
@@ -179,7 +182,7 @@ const UserRegistration = ({ allProps }: any) => {
                 Address: '',
                 JoiningDate: '',
                 LeavingDate: '',
-                Status: 'Pending',
+                Status: '',
                 ApproverEmail: 'anupamrawat17@gmail.com'
             });
         }
@@ -191,7 +194,7 @@ const UserRegistration = ({ allProps }: any) => {
     };
 
     const handleSubmit = async () => {
-        if (!formData.Title || !formData.Department || !formData.Designation || !formData.Address || !formData.JoiningDate) {
+        if (!formData.Title || !formData.Department || !formData.Designation || !formData.Status || !formData.Address || !formData.JoiningDate) {
             alert('Please fill out all required fields.');
             return;
         }
@@ -233,7 +236,8 @@ const UserRegistration = ({ allProps }: any) => {
         return userDetails.filter(u =>
             (u.Title && u.Title.toLowerCase().includes(lowerSearch)) ||
             (u.Department && u.Department.toLowerCase().includes(lowerSearch)) ||
-            (u.Designation && u.Designation.toLowerCase().includes(lowerSearch))
+            (u.Designation && u.Designation.toLowerCase().includes(lowerSearch)) ||
+            (u.Status && u.Status.toLowerCase().includes(lowerSearch))
         );
     }, [userDetails, searchTerm]);
 
@@ -418,6 +422,13 @@ const UserRegistration = ({ allProps }: any) => {
                         options={designationChoices.map(d => ({ key: d, text: d }))}
                         selectedKey={formData.Designation}
                         onChange={(e, option) => setFormData({ ...formData, Designation: option?.key as string || '' })}
+                    />
+                    <Dropdown
+                        label="Status"
+                        required
+                        options={statusChoices.map(d => ({ key: d, text: d }))}
+                        selectedKey={formData.Status}
+                        onChange={(e, option) => setFormData({ ...formData, Status: option?.key as string || '' })}
                     />
                     <TextField
                         label="Address"

@@ -2,5 +2,5 @@
   "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/spfx-serve.schema.json",
   "port": 4321,
   "https": true,
-  "initialPage": "https://holidaywiser.sharepoint.com/sites/MainRoot/SubsiteA/_layouts/workbench.aspx"
+  "initialPage": "https://apeda.sharepoint.com/sites/RootSite/_layouts/workbench.aspx"
 }
