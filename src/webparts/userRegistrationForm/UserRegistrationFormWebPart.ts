@@ -15,6 +15,7 @@ import { IUserRegistrationFormProps } from './components/IUserRegistrationFormPr
 export interface IUserRegistrationFormWebPartProps {
   description: string;
   siteUrl: string;
+  Context: any;
   UserRegistrationDetailsList: string;
 }
 
@@ -33,6 +34,7 @@ export default class UserRegistrationFormWebPart extends BaseClientSideWebPart<I
         hasTeamsContext: !!this.context.sdks.microsoftTeams,
         userDisplayName: this.context.pageContext.user.displayName,
         siteUrl: this.context.pageContext.web.absoluteUrl,
+        Context: this.context,
         UserRegistrationDetailsList: this.properties.UserRegistrationDetailsList
       }
     );

@@ -5,5 +5,6 @@ export interface IUserRegistrationFormProps {
   hasTeamsContext: boolean;
   userDisplayName: string;
   siteUrl: any;
+  Context: any;
   UserRegistrationDetailsList: string;
 }

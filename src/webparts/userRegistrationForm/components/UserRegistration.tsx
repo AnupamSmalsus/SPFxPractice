@@ -24,6 +24,10 @@ import {
     MessageBar,
     MessageBarType
 } from '@fluentui/react';
+import "@pnp/sp/webs";
+import "@pnp/sp/files";
+import "@pnp/sp/folders";
+import ResumeUpload from './DragAndDrop';
 
 const theme = getTheme();
 const classNames = mergeStyleSets({
@@ -84,6 +88,7 @@ const ACTION_COLUMN_WIDTH = 90;
 const DATA_COLUMN_COUNT = 6;
 const MIN_DATA_COLUMN_WIDTH = 100;
 
+
 const UserRegistration = ({ allProps }: any) => {
     const [userDetails, setUserDetails] = React.useState<any[]>([]);
     const [departmentChoices, setDepartmentChoices] = React.useState<string[]>([]);
@@ -93,7 +98,7 @@ const UserRegistration = ({ allProps }: any) => {
     const [listWidth, setListWidth] = React.useState(0);
 
     const [isPanelOpen, setIsPanelOpen] = React.useState(false);
-    const [editUserId, setEditUserId] = React.useState<number | null>(null);
+    const [editUserId, setEditUserId] = React.useState<any>(null);
     const [formData, setFormData] = React.useState<any>({
         Title: '',
         Department: '',
@@ -102,6 +107,7 @@ const UserRegistration = ({ allProps }: any) => {
         JoiningDate: '',
         LeavingDate: '',
         Status: 'Pending',
+        Remarks: '',
         ApproverEmail: 'anupamrawat17@gmail.com'
     });
 
@@ -136,8 +142,8 @@ const UserRegistration = ({ allProps }: any) => {
         const web = new Web(allProps?.siteUrl);
         try {
             const items: any = await web.lists.getById(allProps?.UserRegistrationDetailsList).items
-                .select('Id', 'Title', 'Department', 'Designation', 'Address', 'JoiningDate', 'LeavingDate', 'Status', 'ApproverEmail')
-                .filter("Status eq 'Approved' or Status eq 'Pending'")
+                .select('Id', 'Title', 'Department', 'Designation', 'Address', 'JoiningDate', 'LeavingDate', 'Remarks', 'Status', 'ApproverEmail')
+                .filter("Status eq 'Approved' or Status eq 'Pending' or Status eq 'Rejected'")
                 .getAll();
             setUserDetails(items);
         }
@@ -168,6 +174,7 @@ const UserRegistration = ({ allProps }: any) => {
                 JoiningDate: user.JoiningDate ? user.JoiningDate.split('T')[0] : '',
                 LeavingDate: user.LeavingDate ? user.LeavingDate.split('T')[0] : '',
                 Status: user.Status || 'Pending',
+                Remarks: user.Remarks,
                 ApproverEmail: user.ApproverEmail || 'anupamrawat17@gmail.com'
             });
         } else {
@@ -180,6 +187,7 @@ const UserRegistration = ({ allProps }: any) => {
                 JoiningDate: '',
                 LeavingDate: '',
                 Status: 'Pending',
+                Remarks: '',
                 ApproverEmail: 'anupamrawat17@gmail.com'
             });
         }
@@ -312,6 +320,19 @@ const UserRegistration = ({ allProps }: any) => {
             )
         },
         {
+            key: 'Remarks',
+            name: 'Remarks',
+            fieldName: 'Remarks',
+            minWidth: dataColumnWidth,
+            maxWidth: dataColumnWidth,
+            isResizable: false,
+            onRender: (item) => (
+                <span>
+                    {item.Remarks}
+                </span>
+            )
+        },
+        {
             key: 'Action',
             name: 'Action',
             fieldName: 'Action',
@@ -440,7 +461,16 @@ const UserRegistration = ({ allProps }: any) => {
                         value={formData.LeavingDate}
                         onChange={(e, newValue) => setFormData({ ...formData, LeavingDate: newValue || '' })}
                     />
+                    {editUserId &&
+                        <TextField
+                            label="Remarks"
+                            multiline
+                            rows={3}
+                            value={formData.Remarks}
+                            onChange={(e, newValue) => setFormData({ ...formData, Remarks: newValue || '' })}
+                        />}
                 </Stack>
+                {editUserId && <ResumeUpload context={allProps?.Context} userRegistrationItemId={editUserId} />}
             </Panel>
         </div>
     );
