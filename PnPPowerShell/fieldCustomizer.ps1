@@ -1,8 +1,15 @@
-Connect-PnPOnline -Url "https://holidaywiser.sharepoint.com/sites/MainRoot/SubsiteA" -ClientId "3dce459d-605f-40f5-8573-4abd196e6220" -Interactive
-$field = Get-PnPField -List "NewTaskList" -Identity "Status"
+Connect-PnPOnline `
+    -Url "https://apeda.sharepoint.com/sites/RootSite" `
+    -ClientId "e4f4feeb-ec85-4db6-927b-5566740b4dc6" `
+    -Interactive
 
-$field.ClientSideComponentId = "10e817ed-ae7f-4706-a467-6ff3385dc541"
+$componentId = [Guid]::Parse("10e817ed-ae7f-4706-a467-6ff3385dc541")
 
-$field.Update()
+Set-PnPField `
+    -List "UserRegisterationDetailsList" `
+    -Identity "Status" `
+    -Values @{
+        ClientSideComponentId = $componentId
+    }
 
-Invoke-PnPQuery
+Write-Host "Field Customizer associated successfully!" -ForegroundColor Green
