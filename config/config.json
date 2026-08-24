@@ -25,12 +25,21 @@
           "manifest": "./src/webparts/reduxUserForm/ReduxUserFormWebPart.manifest.json"
         }
       ]
+    },
+    "docuement-portal-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/docuementPortal/DocuementPortalWebPart.js",
+          "manifest": "./src/webparts/docuementPortal/DocuementPortalWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
   "localizedResources": {
     "FirstWebPartWebPartStrings": "lib/webparts/firstWebPart/loc/{locale}.js",
     "UserRegistrationFormWebPartStrings": "lib/webparts/userRegistrationForm/loc/{locale}.js",
-    "ReduxUserFormWebPartStrings": "lib/webparts/reduxUserForm/loc/{locale}.js"
+    "ReduxUserFormWebPartStrings": "lib/webparts/reduxUserForm/loc/{locale}.js",
+    "DocuementPortalWebPartStrings": "lib/webparts/docuementPortal/loc/{locale}.js"
   }
 }
