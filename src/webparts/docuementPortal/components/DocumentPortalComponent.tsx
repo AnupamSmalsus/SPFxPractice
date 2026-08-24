@@ -28,6 +28,7 @@ import {
 } from '@tanstack/react-table';
 
 interface IDocument {
+    FileSize: string;
     Id: number;
     Title: string;
     FileRef: string;
@@ -270,8 +271,10 @@ const DocumentPortalComponent = (allProps: any) => {
                     'FileRef',
                     'FileDirRef',
                     'FileLeafRef',
+                    'File/Length',
                     'FSObjType'
                 )
+                .expand('File')
                 .filter('FSObjType eq 0')
                 .getAll();
 
@@ -291,6 +294,7 @@ const DocumentPortalComponent = (allProps: any) => {
                     FileRef: doc.FileRef,
                     FileDirRef: doc.FileDirRef,
                     FileLeafRef: doc.FileLeafRef,
+                    FileSize: `${(doc.File.Length / 1024).toFixed(2)} KB`, // Convert bytes to KB
                     userName: userMap.get(doc.Id) || 'Unknown User'
                 }));
 
@@ -407,24 +411,17 @@ const DocumentPortalComponent = (allProps: any) => {
         },
 
         {
-            accessorKey: 'FileRef',
-            header: 'URL',
+            accessorKey: 'FileSize',
+            header: 'File Size',
 
             cell: ({ row }) => {
 
-                const url = row.original.FileRef;
+                const fileSize = row.original.FileSize;
 
                 return (
-                    <Link
-                        href={url}
-                        target="_blank"
-                        data-interception="off"
-                        rel="noopener noreferrer"
-                        className={classNames.urlLink}
-                    >
-                        <Icon iconName="Link" />
-                        <span>Open Document</span>
-                    </Link>
+                    <div>
+                        {fileSize}
+                    </div>
                 );
             }
         }
