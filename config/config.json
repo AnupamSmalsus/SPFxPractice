@@ -33,6 +33,14 @@
           "manifest": "./src/webparts/docuementPortal/DocuementPortalWebPart.manifest.json"
         }
       ]
+    },
+    "job-application-portal-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/jobApplicationPortal/JobApplicationPortalWebPart.js",
+          "manifest": "./src/webparts/jobApplicationPortal/JobApplicationPortalWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
@@ -40,6 +48,7 @@
     "FirstWebPartWebPartStrings": "lib/webparts/firstWebPart/loc/{locale}.js",
     "UserRegistrationFormWebPartStrings": "lib/webparts/userRegistrationForm/loc/{locale}.js",
     "ReduxUserFormWebPartStrings": "lib/webparts/reduxUserForm/loc/{locale}.js",
-    "DocuementPortalWebPartStrings": "lib/webparts/docuementPortal/loc/{locale}.js"
+    "DocuementPortalWebPartStrings": "lib/webparts/docuementPortal/loc/{locale}.js",
+    "JobApplicationPortalWebPartStrings": "lib/webparts/jobApplicationPortal/loc/{locale}.js"
   }
 }
