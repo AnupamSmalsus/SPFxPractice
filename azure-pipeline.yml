@@ -19,66 +19,79 @@ stages:
   displayName: 'Build SPFx Solution'
 
   jobs:
+
   - job: BuildSPFx
     displayName: 'Build SPFx'
 
     steps:
 
-    # ----------------------------------------------------------
+    # --------------------------------------------------------
     # Install Node.js
-    # ----------------------------------------------------------
+    # --------------------------------------------------------
 
     - task: NodeTool@0
       displayName: 'Install Node.js $(nodeVersion)'
       inputs:
         versionSpec: '$(nodeVersion)'
 
-    # ----------------------------------------------------------
-    # Verify Node / npm
-    # ----------------------------------------------------------
+
+    # --------------------------------------------------------
+    # Verify Node.js and npm
+    # --------------------------------------------------------
 
     - script: |
+        echo "Node version:"
         node --version
+
+        echo ""
+        echo "npm version:"
         npm --version
       displayName: 'Verify Node.js and npm'
 
-    # ----------------------------------------------------------
+
+    # --------------------------------------------------------
     # Install dependencies
-    # ----------------------------------------------------------
+    # --------------------------------------------------------
 
     - script: |
         npm install
       displayName: 'Install npm dependencies'
 
-    # ----------------------------------------------------------
+
+    # --------------------------------------------------------
     # Verify SPFx dependencies
-    # ----------------------------------------------------------
+    # --------------------------------------------------------
 
     - script: |
         echo "Gulp version:"
         npx gulp --version
 
+        echo ""
         echo "SPFx build version:"
         npm ls @microsoft/sp-build-web
 
+        echo ""
         echo "Gulp package:"
         npm ls gulp
 
+        echo ""
         echo "TypeScript:"
         npm ls typescript
       displayName: 'Verify SPFx dependencies'
 
-    # ----------------------------------------------------------
-    # Clean previous build
-    # ----------------------------------------------------------
+
+    # --------------------------------------------------------
+    # Clean project
+    # --------------------------------------------------------
 
     - script: |
         npx gulp clean
       displayName: 'Clean SPFx project'
 
-    # ----------------------------------------------------------
+
+    # --------------------------------------------------------
     # Bundle SPFx solution
-    # ----------------------------------------------------------
+    # --------------------------------------------------------
 
     - script: |
         npx gulp bundle --ship --verbose 2>&1 | tee gulp-bundle.log
@@ -87,9 +100,10 @@ stages:
       env:
         NODE_OPTIONS: '--max-old-space-size=8192'
 
-    # ----------------------------------------------------------
+
+    # --------------------------------------------------------
     # Package SPFx solution
-    # ----------------------------------------------------------
+    # --------------------------------------------------------
 
     - script: |
         npx gulp package-solution --ship --verbose
@@ -97,9 +111,10 @@ stages:
       env:
         NODE_OPTIONS: '--max-old-space-size=8192'
 
-    # ----------------------------------------------------------
+
+    # --------------------------------------------------------
     # Verify .sppkg package
-    # ----------------------------------------------------------
+    # --------------------------------------------------------
 
     - script: |
         echo "Searching for generated .sppkg files..."
@@ -118,12 +133,14 @@ stages:
           exit 1
         fi
 
+        echo ""
         echo "Found $PACKAGE_COUNT .sppkg package(s)."
       displayName: 'Verify SPFx package'
 
-    # ----------------------------------------------------------
-    # Publish SPFx package as pipeline artifact
-    # ----------------------------------------------------------
+
+    # --------------------------------------------------------
+    # Publish SPFx artifact
+    # --------------------------------------------------------
 
     - task: PublishPipelineArtifact@1
       displayName: 'Publish SPFx Artifact'
@@ -140,20 +157,20 @@ stages:
 - stage: Deploy
   displayName: 'Deploy to SharePoint Tenant App Catalog'
 
-  dependsOn:
-    - Build
+  dependsOn: Build
 
   condition: succeeded()
 
   jobs:
+
   - job: DeploySPFx
-    displayName: 'Deploy SPFx'
+    displayName: 'Deploy SPFx to Tenant App Catalog'
 
     steps:
 
-    # ----------------------------------------------------------
-    # Download build artifact
-    # ----------------------------------------------------------
+    # --------------------------------------------------------
+    # Download SPFx artifact
+    # --------------------------------------------------------
 
     - task: DownloadPipelineArtifact@2
       displayName: 'Download SPFx Artifact'
@@ -161,176 +178,20 @@ stages:
         artifact: 'spfx-package'
         path: '$(Pipeline.Workspace)/spfx-package'
 
-    # ----------------------------------------------------------
-    # Verify downloaded package
-    # ----------------------------------------------------------
+
+    # --------------------------------------------------------
+    # Locate .sppkg package
+    # --------------------------------------------------------
 
     - task: PowerShell@2
-      displayName: 'Verify SPFx Package'
+      displayName: 'Locate SPFx Package'
       inputs:
         targetType: 'inline'
         pwsh: true
+
         script: |
 
           $ErrorActionPreference = "Stop"
-
-          $packagePath = "$(Pipeline.Workspace)/spfx-package"
-
-          Write-Host "Searching for .sppkg package..."
-
-          $package = Get-ChildItem `
-            -Path $packagePath `
-            -Filter "*.sppkg" `
-            -Recurse |
-            Select-Object -First 1
-
-          if ($null -eq $package) {
-              throw "SPFx .sppkg package was not found."
-          }
-
-          Write-Host "SPFx package found:"
-          Write-Host $package.FullName
-
-    # ----------------------------------------------------------
-    # Install PnP PowerShell
-    # ----------------------------------------------------------
-
-    - task: PowerShell@2
-      displayName: 'Install PnP PowerShell'
-      inputs:
-        targetType: 'inline'
-        pwsh: true
-        script: |
-
-          $ErrorActionPreference = "Stop"
-
-          Set-PSRepository `
-            -Name PSGallery `
-            -InstallationPolicy Trusted
-
-          Install-Module `
-            -Name PnP.PowerShell `
-            -Scope CurrentUser `
-            -Force `
-            -AllowClobber
-
-          Import-Module PnP.PowerShell
-
-          Write-Host "PnP PowerShell installed successfully."
-
-          Write-Host "PnP PowerShell version:"
-          Get-InstalledModule PnP.PowerShell
-
-          Write-Host "Connect-PnPOnline:"
-          Get-Command Connect-PnPOnline
-
-          Write-Host "Add-PnPApp:"
-          Get-Command Add-PnPApp
-
-    # ----------------------------------------------------------
-    # Test SharePoint authentication and permissions
-    # ----------------------------------------------------------
-
-    - task: PowerShell@2
-      displayName: 'Test SharePoint Connection'
-      inputs:
-        targetType: 'inline'
-        pwsh: true
-        script: |
-
-          $ErrorActionPreference = "Stop"
-
-          $appCatalogUrl = "$(AppCatalogUrl)"
-          $clientId = "$(SharePointClientId)"
-          $clientSecret = $env:SP_CLIENT_SECRET
-
-          Write-Host "========================================"
-          Write-Host "SharePoint Connection Test"
-          Write-Host "========================================"
-
-          Write-Host "App Catalog URL:"
-          Write-Host $appCatalogUrl
-
-          Write-Host "Client ID:"
-          Write-Host $clientId
-
-          if ([string]::IsNullOrWhiteSpace($appCatalogUrl)) {
-              throw "AppCatalogUrl is empty."
-          }
-
-          if ([string]::IsNullOrWhiteSpace($clientId)) {
-              throw "SharePointClientId is empty."
-          }
-
-          if ([string]::IsNullOrWhiteSpace($clientSecret)) {
-              throw "SharePointClientSecret is empty."
-          }
-
-          Write-Host "Client secret is present."
-
-          Write-Host "Connecting to SharePoint..."
-
-          $connection = Connect-PnPOnline `
-            -Url $appCatalogUrl `
-            -ClientId $clientId `
-            -ClientSecret $clientSecret `
-            -ReturnConnection
-
-          Write-Host "PnP connection created successfully."
-
-          Write-Host "Testing SharePoint Web..."
-
-          $web = Get-PnPWeb `
-            -Connection $connection `
-            -ErrorAction Stop
-
-          Write-Host "SharePoint authentication successful."
-
-          Write-Host "Connected URL:"
-          Write-Host $web.Url
-
-          Write-Host "Site Title:"
-          Write-Host $web.Title
-
-          Write-Host "Testing Tenant App Catalog access..."
-
-          $apps = Get-PnPApp `
-            -Scope Tenant `
-            -Connection $connection `
-            -ErrorAction Stop
-
-          Write-Host "Tenant App Catalog access successful."
-
-          Write-Host "Number of apps found:"
-          Write-Host $apps.Count
-
-      env:
-        SP_CLIENT_SECRET: $(SharePointClientSecret)
-
-    # ----------------------------------------------------------
-    # Deploy SPFx package
-    # ----------------------------------------------------------
-
-    - task: PowerShell@2
-      displayName: 'Deploy SPFx to Tenant App Catalog'
-      inputs:
-        targetType: 'inline'
-        pwsh: true
-        script: |
-
-          $ErrorActionPreference = "Stop"
-
-          $appCatalogUrl = "$(AppCatalogUrl)"
-          $clientId = "$(SharePointClientId)"
-          $clientSecret = $env:SP_CLIENT_SECRET
-
-          Write-Host "========================================"
-          Write-Host "SPFx Tenant App Catalog Deployment"
-          Write-Host "========================================"
-
-          # ----------------------------------------------------
-          # Find .sppkg
-          # ----------------------------------------------------
 
           Write-Host "Searching for SPFx package..."
 
@@ -341,57 +202,282 @@ stages:
             Select-Object -First 1
 
           if ($null -eq $package) {
-              throw "SPFx .sppkg package was not found."
+              throw "ERROR: SPFx .sppkg package was not found."
           }
 
-          Write-Host "Package found:"
+          Write-Host ""
+          Write-Host "SPFx package found:"
           Write-Host $package.FullName
+          Write-Host ""
 
-          # ----------------------------------------------------
-          # Validate variables
-          # ----------------------------------------------------
 
-          if ([string]::IsNullOrWhiteSpace($appCatalogUrl)) {
-              throw "AppCatalogUrl is empty."
+    # --------------------------------------------------------
+    # Install PnP.PowerShell
+    # --------------------------------------------------------
+
+    - task: PowerShell@2
+      displayName: 'Install PnP.PowerShell'
+      inputs:
+        targetType: 'inline'
+        pwsh: true
+
+        script: |
+
+          $ErrorActionPreference = "Stop"
+
+          Write-Host "Installing PnP.PowerShell..."
+
+          Install-Module `
+            -Name PnP.PowerShell `
+            -Scope CurrentUser `
+            -Force `
+            -AllowClobber
+
+          Import-Module PnP.PowerShell
+
+          Write-Host ""
+          Write-Host "Installed PnP.PowerShell version:"
+
+          Get-Module PnP.PowerShell -ListAvailable |
+            Sort-Object Version -Descending |
+            Select-Object -First 1 Name, Version
+
+
+    # --------------------------------------------------------
+    # Download PFX certificate from Azure DevOps Secure Files
+    # --------------------------------------------------------
+
+    - task: DownloadSecureFile@1
+      name: deploymentCertificate
+      displayName: 'Download Entra ID Certificate'
+      inputs:
+        secureFile: 'spfx-deployment.pfx'
+
+
+    # ========================================================
+    # TEST CERTIFICATE AUTHENTICATION
+    # ========================================================
+
+    - task: PowerShell@2
+      displayName: 'Test SharePoint Certificate Authentication'
+      inputs:
+        targetType: 'inline'
+        pwsh: true
+
+        script: |
+
+          $ErrorActionPreference = "Stop"
+
+          Write-Host "=========================================="
+          Write-Host "SharePoint Authentication Test"
+          Write-Host "=========================================="
+
+          # --------------------------------------------------
+          # Configuration
+          # --------------------------------------------------
+
+          $appCatalogUrl = "$(AppCatalogUrl)"
+          $clientId = "$(SharePointClientId)"
+          $tenantId = "$(TenantId)"
+          $certificatePath = "$(deploymentCertificate.secureFilePath)"
+
+          Write-Host ""
+          Write-Host "App Catalog URL:"
+          Write-Host $appCatalogUrl
+
+          Write-Host ""
+          Write-Host "Client ID:"
+          Write-Host $clientId
+
+          Write-Host ""
+          Write-Host "Tenant:"
+          Write-Host $tenantId
+
+          Write-Host ""
+          Write-Host "Certificate:"
+          Write-Host $certificatePath
+
+
+          # --------------------------------------------------
+          # Validate certificate file
+          # --------------------------------------------------
+
+          if (!(Test-Path $certificatePath)) {
+              throw "Certificate file was not found: $certificatePath"
           }
 
-          if ([string]::IsNullOrWhiteSpace($clientId)) {
-              throw "SharePointClientId is empty."
-          }
+          Write-Host ""
+          Write-Host "Certificate file exists."
 
-          if ([string]::IsNullOrWhiteSpace($clientSecret)) {
-              throw "SharePointClientSecret is empty."
-          }
 
-          # ----------------------------------------------------
-          # Connect to SharePoint
-          # ----------------------------------------------------
+          # --------------------------------------------------
+          # Create certificate password
+          # --------------------------------------------------
 
+          $certificatePassword = ConvertTo-SecureString `
+            "$(CertificatePassword)" `
+            -AsPlainText `
+            -Force
+
+
+          # --------------------------------------------------
+          # Connect using Entra ID certificate
+          # --------------------------------------------------
+
+          Write-Host ""
           Write-Host "Connecting to SharePoint..."
 
           $connection = Connect-PnPOnline `
             -Url $appCatalogUrl `
             -ClientId $clientId `
-            -ClientSecret $clientSecret `
-            -ReturnConnection
+            -Tenant $tenantId `
+            -CertificatePath $certificatePath `
+            -CertificatePassword $certificatePassword `
+            -ReturnConnection `
+            -ValidateConnection
 
-          Write-Host "Connected successfully."
 
-          # ----------------------------------------------------
-          # Verify connection
-          # ----------------------------------------------------
+          Write-Host ""
+          Write-Host "Authentication successful."
+
+
+          # --------------------------------------------------
+          # Test SharePoint site access
+          # --------------------------------------------------
+
+          Write-Host ""
+          Write-Host "Testing SharePoint site access..."
 
           $web = Get-PnPWeb `
             -Connection $connection `
             -ErrorAction Stop
 
-          Write-Host "Connected SharePoint URL:"
+
+          Write-Host ""
+          Write-Host "SharePoint URL:"
           Write-Host $web.Url
 
-          # ----------------------------------------------------
-          # Upload and publish SPFx package
-          # ----------------------------------------------------
+          Write-Host ""
+          Write-Host "SharePoint Title:"
+          Write-Host $web.Title
 
+
+          # --------------------------------------------------
+          # Test Tenant App Catalog access
+          # --------------------------------------------------
+
+          Write-Host ""
+          Write-Host "Testing Tenant App Catalog access..."
+
+          $apps = Get-PnPApp `
+            -Scope Tenant `
+            -Connection $connection `
+            -ErrorAction Stop
+
+
+          Write-Host ""
+          Write-Host "Tenant App Catalog access successful."
+
+          Write-Host ""
+          Write-Host "Existing applications:"
+          Write-Host $apps.Count
+
+
+          Write-Host ""
+          Write-Host "=========================================="
+          Write-Host "Authentication Test PASSED"
+          Write-Host "=========================================="
+
+
+    # ========================================================
+    # DEPLOY SPFX PACKAGE
+    # ========================================================
+
+    - task: PowerShell@2
+      displayName: 'Deploy SPFx to Tenant App Catalog'
+      inputs:
+        targetType: 'inline'
+        pwsh: true
+
+        script: |
+
+          $ErrorActionPreference = "Stop"
+
+          Write-Host "=========================================="
+          Write-Host "SPFx Deployment"
+          Write-Host "=========================================="
+
+
+          # --------------------------------------------------
+          # Configuration
+          # --------------------------------------------------
+
+          $appCatalogUrl = "$(AppCatalogUrl)"
+          $clientId = "$(SharePointClientId)"
+          $tenantId = "$(TenantId)"
+          $certificatePath = "$(deploymentCertificate.secureFilePath)"
+
+
+          # --------------------------------------------------
+          # Find .sppkg package
+          # --------------------------------------------------
+
+          Write-Host ""
+          Write-Host "Locating SPFx package..."
+
+          $package = Get-ChildItem `
+            -Path "$(Pipeline.Workspace)/spfx-package" `
+            -Filter "*.sppkg" `
+            -Recurse |
+            Select-Object -First 1
+
+
+          if ($null -eq $package) {
+              throw "ERROR: SPFx .sppkg package was not found."
+          }
+
+
+          Write-Host ""
+          Write-Host "Package found:"
+          Write-Host $package.FullName
+
+
+          # --------------------------------------------------
+          # Certificate password
+          # --------------------------------------------------
+
+          $certificatePassword = ConvertTo-SecureString `
+            "$(CertificatePassword)" `
+            -AsPlainText `
+            -Force
+
+
+          # --------------------------------------------------
+          # Connect to SharePoint
+          # --------------------------------------------------
+
+          Write-Host ""
+          Write-Host "Connecting to SharePoint..."
+
+          $connection = Connect-PnPOnline `
+            -Url $appCatalogUrl `
+            -ClientId $clientId `
+            -Tenant $tenantId `
+            -CertificatePath $certificatePath `
+            -CertificatePassword $certificatePassword `
+            -ReturnConnection `
+            -ValidateConnection
+
+
+          Write-Host ""
+          Write-Host "Connected successfully."
+
+
+          # --------------------------------------------------
+          # Upload and publish SPFx package
+          # --------------------------------------------------
+
+          Write-Host ""
           Write-Host "Uploading SPFx package..."
 
           Add-PnPApp `
@@ -402,9 +488,8 @@ stages:
             -Connection $connection `
             -ErrorAction Stop
 
-          Write-Host "========================================"
-          Write-Host "SPFx deployment completed successfully."
-          Write-Host "========================================"
 
-      env:
-        SP_CLIENT_SECRET: $(SharePointClientSecret)
+          Write-Host ""
+          Write-Host "=========================================="
+          Write-Host "SPFx Deployment Completed Successfully"
+          Write-Host "=========================================="
