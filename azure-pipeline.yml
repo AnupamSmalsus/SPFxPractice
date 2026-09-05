@@ -63,7 +63,7 @@ stages:
     # --------------------------------------------------------
 
     - script: |
-        npx gulp bundle --ship
+        npx gulp bundle --ship --max_old_space_size=81920
       displayName: 'Bundle SPFx solution'
 
     # --------------------------------------------------------
