@@ -83,7 +83,7 @@ const DocumentSearch: React.FC<ILibrarySearchProps> = ({ searchService }) => {
             {!isLoading && results.length === 0 && (
                 <div className={styles.emptyState}>
                     <h3>No Results Found</h3>
-                    <p>Try broadening your search term or selecting 'ALL'.</p>
+                    <p>Try broadening your search term or selecting ALL.</p>
                 </div>
             )}
 
