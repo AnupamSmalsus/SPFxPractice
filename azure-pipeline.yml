@@ -1,0 +1,68 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+
+- stage: Build
+  displayName: 'Build SPFx Solution'
+
+  jobs:
+  - job: BuildSPFx
+    displayName: 'Build SPFx'
+
+    steps:
+
+    - task: NodeTool@0
+      displayName: 'Install Node.js 18'
+      inputs:
+        versionSpec: '18.18.0'
+
+    - script: |
+        node --version
+        npm --version
+      displayName: 'Check Node.js version'
+
+    - script: |
+        npm install
+      displayName: 'Install dependencies'
+
+    - script: |
+        npx gulp clean
+        npx gulp bundle --ship
+        npx gulp package-solution --ship
+      displayName: 'Build and Package SPFx'
+
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish SPFx Package'
+      inputs:
+        targetPath: 'sharepoint/solution'
+        artifact: 'spfx-package'
+        publishLocation: 'pipeline'
+
+
+- stage: Deploy
+  displayName: 'Deploy to SharePoint'
+
+  dependsOn: Build
+  condition: succeeded()
+
+  jobs:
+  - job: DeploySPFx
+    displayName: 'Deploy SPFx Package'
+
+    steps:
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download SPFx Package'
+      inputs:
+        artifact: 'spfx-package'
+        path: '$(Pipeline.Workspace)/spfx-package'
+
+    - script: |
+        ls -la "$(Pipeline.Workspace)/spfx-package"
+      displayName: 'Verify SPFx Package'
