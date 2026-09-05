@@ -6,7 +6,14 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
+variables:
+  nodeVersion: '18.18.0'
+
 stages:
+
+# ============================================================
+# BUILD STAGE
+# ============================================================
 
 - stage: Build
   displayName: 'Build SPFx Solution'
@@ -17,52 +24,228 @@ stages:
 
     steps:
 
+    # --------------------------------------------------------
+    # Install Node.js
+    # --------------------------------------------------------
+
     - task: NodeTool@0
-      displayName: 'Install Node.js 18'
+      displayName: 'Install Node.js $(nodeVersion)'
       inputs:
-        versionSpec: '18.18.0'
+        versionSpec: '$(nodeVersion)'
+
+    # --------------------------------------------------------
+    # Verify Node.js and npm
+    # --------------------------------------------------------
 
     - script: |
         node --version
         npm --version
-      displayName: 'Check Node.js version'
+      displayName: 'Verify Node.js and npm'
+
+    # --------------------------------------------------------
+    # Install dependencies
+    # --------------------------------------------------------
 
     - script: |
-        npm install
+        npm ci
       displayName: 'Install dependencies'
+
+    # --------------------------------------------------------
+    # Clean SPFx project
+    # --------------------------------------------------------
 
     - script: |
         npx gulp clean
+      displayName: 'Clean SPFx project'
+
+    # --------------------------------------------------------
+    # Bundle SPFx solution
+    # --------------------------------------------------------
+
+    - script: |
         npx gulp bundle --ship
+      displayName: 'Bundle SPFx solution'
+
+    # --------------------------------------------------------
+    # Package SPFx solution
+    # --------------------------------------------------------
+
+    - script: |
         npx gulp package-solution --ship
-      displayName: 'Build and Package SPFx'
+      displayName: 'Package SPFx solution'
+
+    # --------------------------------------------------------
+    # Verify generated .sppkg
+    # --------------------------------------------------------
+
+    - script: |
+        echo "Generated SPFx packages:"
+        find "$(Build.SourcesDirectory)/sharepoint/solution" \
+          -name "*.sppkg" \
+          -print
+      displayName: 'Verify SPFx package'
+
+    # --------------------------------------------------------
+    # Publish package as pipeline artifact
+    # --------------------------------------------------------
 
     - task: PublishPipelineArtifact@1
-      displayName: 'Publish SPFx Package'
+      displayName: 'Publish SPFx Artifact'
       inputs:
-        targetPath: 'sharepoint/solution'
+        targetPath: '$(Build.SourcesDirectory)/sharepoint/solution'
         artifact: 'spfx-package'
         publishLocation: 'pipeline'
 
 
+# ============================================================
+# DEPLOY STAGE
+# ============================================================
+
 - stage: Deploy
-  displayName: 'Deploy to SharePoint'
+  displayName: 'Deploy to SharePoint Tenant App Catalog'
 
   dependsOn: Build
   condition: succeeded()
 
   jobs:
   - job: DeploySPFx
-    displayName: 'Deploy SPFx Package'
+    displayName: 'Deploy SPFx to Tenant App Catalog'
 
     steps:
 
+    # --------------------------------------------------------
+    # Download build artifact
+    # --------------------------------------------------------
+
     - task: DownloadPipelineArtifact@2
-      displayName: 'Download SPFx Package'
+      displayName: 'Download SPFx Artifact'
       inputs:
         artifact: 'spfx-package'
         path: '$(Pipeline.Workspace)/spfx-package'
 
+    # --------------------------------------------------------
+    # Verify downloaded package
+    # --------------------------------------------------------
+
     - script: |
-        ls -la "$(Pipeline.Workspace)/spfx-package"
-      displayName: 'Verify SPFx Package'
+        echo "Downloaded SPFx packages:"
+        find "$(Pipeline.Workspace)/spfx-package" \
+          -name "*.sppkg" \
+          -print
+      displayName: 'Verify downloaded SPFx package'
+
+    # --------------------------------------------------------
+    # Install PnP PowerShell
+    # --------------------------------------------------------
+
+    - task: PowerShell@2
+      displayName: 'Install PnP PowerShell'
+      inputs:
+        targetType: 'inline'
+        pwsh: true
+        script: |
+
+          Set-PSRepository `
+            -Name PSGallery `
+            -InstallationPolicy Trusted
+
+          Install-Module `
+            -Name PnP.PowerShell `
+            -Scope CurrentUser `
+            -Force `
+            -AllowClobber
+
+          Write-Host "PnP PowerShell installed successfully."
+
+
+    # --------------------------------------------------------
+    # Deploy SPFx package
+    # --------------------------------------------------------
+
+    - task: PowerShell@2
+      displayName: 'Deploy SPFx to Tenant App Catalog'
+      inputs:
+        targetType: 'inline'
+        pwsh: true
+
+        script: |
+
+          $ErrorActionPreference = "Stop"
+
+          # --------------------------------------------------
+          # Configuration
+          # --------------------------------------------------
+
+          $appCatalogUrl = "$(AppCatalogUrl)"
+          $clientId = "$(SharePointClientId)"
+
+          # Secret is passed through environment variable
+          $clientSecret = $env:SP_CLIENT_SECRET
+
+          # --------------------------------------------------
+          # Validate secret
+          # --------------------------------------------------
+
+          if ([string]::IsNullOrWhiteSpace($clientSecret)) {
+              throw "SharePoint client secret was not provided."
+          }
+
+          # --------------------------------------------------
+          # Find .sppkg package
+          # --------------------------------------------------
+
+          $package = Get-ChildItem `
+            -Path "$(Pipeline.Workspace)/spfx-package" `
+            -Filter "*.sppkg" `
+            -Recurse |
+            Select-Object -First 1
+
+          if ($null -eq $package) {
+              throw "SPFx .sppkg package was not found."
+          }
+
+          Write-Host "SPFx package found:"
+          Write-Host $package.FullName
+
+          # --------------------------------------------------
+          # Connect to SharePoint Tenant App Catalog
+          # --------------------------------------------------
+
+          Write-Host "Connecting to SharePoint..."
+
+          $connection = Connect-PnPOnline `
+            -Url $appCatalogUrl `
+            -ClientId $clientId `
+            -ClientSecret $clientSecret `
+            -ReturnConnection
+
+          Write-Host "Connected successfully."
+
+          # --------------------------------------------------
+          # Upload / Overwrite / Publish SPFx package
+          # --------------------------------------------------
+
+          Write-Host "Uploading SPFx package to Tenant App Catalog..."
+
+          Add-PnPApp `
+            -Path $package.FullName `
+            -Scope Tenant `
+            -Overwrite `
+            -Publish `
+            -Connection $connection
+
+          # --------------------------------------------------
+          # Deployment completed
+          # --------------------------------------------------
+
+          Write-Host ""
+          Write-Host "=========================================="
+          Write-Host "SPFx deployment completed successfully."
+          Write-Host "=========================================="
+
+      # ------------------------------------------------------
+      # Map Azure DevOps secret variable to environment variable
+      # ------------------------------------------------------
+
+      env:
+        SP_CLIENT_SECRET: $(SharePointClientSecret)
