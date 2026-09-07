@@ -513,7 +513,7 @@ const ExportDetailsPortal:
               $
               {formatCurrency(
                 totalExportValue
-              )}
+              )} Million
             </strong>
 
           </div>
