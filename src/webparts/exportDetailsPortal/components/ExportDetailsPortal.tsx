@@ -494,7 +494,7 @@ const ExportDetailsPortal:
             <strong>
               {formatNumber(
                 totalQuantity
-              )}
+              )} MT
             </strong>
 
           </div>
