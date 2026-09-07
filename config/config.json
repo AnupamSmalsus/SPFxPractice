@@ -41,6 +41,14 @@
           "manifest": "./src/webparts/jobApplicationPortal/JobApplicationPortalWebPart.manifest.json"
         }
       ]
+    },
+    "export-details-portal-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/exportDetailsPortal/ExportDetailsPortalWebPart.js",
+          "manifest": "./src/webparts/exportDetailsPortal/ExportDetailsPortalWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
@@ -49,6 +57,7 @@
     "UserRegistrationFormWebPartStrings": "lib/webparts/userRegistrationForm/loc/{locale}.js",
     "ReduxUserFormWebPartStrings": "lib/webparts/reduxUserForm/loc/{locale}.js",
     "DocuementPortalWebPartStrings": "lib/webparts/docuementPortal/loc/{locale}.js",
-    "JobApplicationPortalWebPartStrings": "lib/webparts/jobApplicationPortal/loc/{locale}.js"
+    "JobApplicationPortalWebPartStrings": "lib/webparts/jobApplicationPortal/loc/{locale}.js",
+    "ExportDetailsPortalWebPartStrings": "lib/webparts/exportDetailsPortal/loc/{locale}.js"
   }
 }
