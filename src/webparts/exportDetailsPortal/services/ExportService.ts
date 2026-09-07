@@ -36,8 +36,7 @@ export class ExportService {
           'Id',
           'Title',
           'Quantity',
-          'ExportValue',
-          'PercentageShare'
+          'ExportValue'
         )
         .top(5000)();
 
