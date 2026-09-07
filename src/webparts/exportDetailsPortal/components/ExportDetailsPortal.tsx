@@ -87,24 +87,6 @@ const normalizeCountryName = (
   );
 };
 
-/*
- * ExportValue is assumed to be stored
- * as actual USD.
- *
- * Example:
- *
- * 50,000,000  = 50 USD Million
- * 100,000,000 = 100 USD Million
- * 500,000,000 = 500 USD Million
- * 1,000,000,000 = 1,000 USD Million
- */
-const getExportValueInMillion = (
-  exportValue: number
-): number => {
-
-  return exportValue / 1000000;
-
-};
 
 /*
  * Determines the color of the country
@@ -114,24 +96,19 @@ const getCountryColor = (
   exportValue: number
 ): string => {
 
-  const valueInMillion =
-    getExportValueInMillion(
-      exportValue
-    );
-
-  if (valueInMillion > 1000) {
+  if (exportValue > 1000) {
     return '#08306B';
   }
 
-  if (valueInMillion >= 500) {
+  if (exportValue >= 500) {
     return '#2171B5';
   }
 
-  if (valueInMillion >= 100) {
+  if (exportValue >= 100) {
     return '#4292C6';
   }
 
-  if (valueInMillion >= 50) {
+  if (exportValue >= 50) {
     return '#9ECAE1';
   }
 
@@ -828,7 +805,7 @@ const ExportDetailsPortal:
             >
 
               <span>
-                Quantity
+                Quantity (MT)
               </span>
 
               <strong>
@@ -846,7 +823,7 @@ const ExportDetailsPortal:
             >
 
               <span>
-                Export Value
+                Export Value (USD Million)
               </span>
 
               <strong>
