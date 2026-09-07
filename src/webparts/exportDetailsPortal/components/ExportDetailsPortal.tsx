@@ -865,25 +865,6 @@ const ExportDetailsPortal:
             >
 
               <span>
-                USD Million
-              </span>
-
-              <strong>
-                $
-                {getExportValueInMillion(
-                  tooltip.exportValue
-                ).toFixed(2)}
-              </strong>
-
-            </div>
-
-            <div
-              className={
-                styles.tooltipRow
-              }
-            >
-
-              <span>
                 Percentage Share
               </span>
 
