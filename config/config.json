@@ -49,6 +49,14 @@
           "manifest": "./src/webparts/exportDetailsPortal/ExportDetailsPortalWebPart.manifest.json"
         }
       ]
+    },
+    "leave-request-portal-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/leaveRequestPortal/LeaveRequestPortalWebPart.js",
+          "manifest": "./src/webparts/leaveRequestPortal/LeaveRequestPortalWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
@@ -58,6 +66,7 @@
     "ReduxUserFormWebPartStrings": "lib/webparts/reduxUserForm/loc/{locale}.js",
     "DocuementPortalWebPartStrings": "lib/webparts/docuementPortal/loc/{locale}.js",
     "JobApplicationPortalWebPartStrings": "lib/webparts/jobApplicationPortal/loc/{locale}.js",
-    "ExportDetailsPortalWebPartStrings": "lib/webparts/exportDetailsPortal/loc/{locale}.js"
+    "ExportDetailsPortalWebPartStrings": "lib/webparts/exportDetailsPortal/loc/{locale}.js",
+    "LeaveRequestPortalWebPartStrings": "lib/webparts/leaveRequestPortal/loc/{locale}.js"
   }
 }
